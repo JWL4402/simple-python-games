@@ -1,8 +1,8 @@
 import pygame
 import math
 
-WHITE = pygame.Color(255, 255, 255)
-BLACK = pygame.Color(0, 0, 0)
+WHITE = 255, 255, 255
+BLACK = 0, 0, 0
 
 config = {
 	"p1_symbol": "X",
@@ -25,7 +25,7 @@ class Square(pygame.sprite.Sprite):
     Represents a square on the board.
 
     Methods:
-        update_value (void): changes the symbol the square
+        update_symbol (void): changes the symbol the square
         draw_letter (void): draws the symbol to the screen
     """
 
@@ -40,7 +40,7 @@ class Square(pygame.sprite.Sprite):
 		pygame.sprite.Sprite.__init__(self)
 
 		self.clicked = False
-		self.value = None
+		self.symbol = None
 
 		self.game = game
 		self.pos = pos
@@ -55,7 +55,7 @@ class Square(pygame.sprite.Sprite):
 		rect.x, rect.y = pos
 		self.rect = rect
 
-	def update_value(self, symbol):
+	def update_symbol(self, symbol):
 		"""
 		Updates the symbol of the square.
 
@@ -63,15 +63,15 @@ class Square(pygame.sprite.Sprite):
 			symbol: content of the square (X or O)
 		
 		Returns:
-			int: 1 if value was changed, 0 if remains the same
+			int: 1 if symbol was changed, 0 if remains the same
 		"""
 		if self.clicked:
 			return 0
 
 		self.clicked = True
-		self.value = symbol  # change value to symbol
+		self.symbol = symbol  # change symbol to symbol
 
-		self.letter = self.game.fonts["L"].render(self.value, False, self.game.config["text_color"])
+		self.letter = self.game.fonts["L"].render(self.symbol, False, self.game.config["text_color"])
 
 		return 1
 
@@ -87,6 +87,10 @@ class Square(pygame.sprite.Sprite):
 class Board:
 	"""
     Represents the board.
+
+	Methods:
+		handle_click (void): handles changing the square's symbol when clicked
+		update (void): executes necessary functions every loop
     """
 
 	def __init__(self, game):
@@ -125,12 +129,13 @@ class Board:
 		clicked = [s for s in self.squares if s.rect.collidepoint(click_pos)]
 		# a list of all squares that collide with the
 		# mouse position when it was clicked
-		clicked_square = clicked[0]
+		if len(clicked):
+			clicked_square = clicked[0]
 
-		p1, p2 = config["p1_symbol"], config["p2_symbol"]
-		symbol = p1 if self.game.turn % 2 == 0 else p2
+			p1, p2 = config["p1_symbol"], config["p2_symbol"]
+			symbol = p1 if self.game.turn % 2 == 0 else p2
 
-		self.game.turn += clicked_square.update_value(symbol)
+			self.game.turn += clicked_square.update_symbol(symbol)
 
 	def draw(self):
 		"""Draws the squares to the board."""
@@ -170,8 +175,9 @@ class Game:
 
 		ss, bs = config["square_size"], config["border_size"]
 		scaled_dimensions = tuple(
-		    map(lambda d: (d * ss) + ((d - 1) * bs), config["board_dimensions"]))
-		# finds the dimensionsF required to fit the squares and
+		    map(lambda d: (d * ss) + ((d - 1) * bs),
+			config["board_dimensions"]))
+		# finds the dimensions required to fit the squares and
 		# border with the specified size
 
 		self.screen = pygame.display.set_mode(scaled_dimensions)
@@ -195,7 +201,6 @@ class Game:
 		self.board.populate_board()
 
 		while self.active:
-			print(True)
 			self.update()
 
 	def handle_events(self):
@@ -204,7 +209,7 @@ class Game:
 
 		for event in events:
 			if event.type == pygame.QUIT:
-				pygame.quit()
+				exit()
         
 			if event.type == pygame.MOUSEBUTTONDOWN and not self.winner:
 				pos = pygame.mouse.get_pos()
@@ -215,11 +220,10 @@ class Game:
 				keys = pygame.key.get_pressed()
 	
 				if keys[pygame.K_r]:
-					print(False)
 					self.start_match()
 	
 				if keys[pygame.K_q]:
-					pygame.quit()
+					exit()
 
 	def check_win(self):
 		"""Checks for a winner or a draw."""
@@ -237,19 +241,15 @@ class Game:
 		]
 
 		for arr in win_arrangements:
-				i1, i2, i3 = arr[0], arr[1], arr[2] # TODO : maybe could be improved with list comprehension
+				i1, i2, i3 = arr[0], arr[1], arr[2]
 				s1, s2, s3 = squares[i1], squares[i2], squares[i3]
-				if s1.value == s2.value and s2.value == s3.value and s1.value is not None:
-					# check if a player has occupied any sequence
-					# of squares required to win
-					self.winner = s1.value
+				if s1.symbol == s2.symbol and s2.symbol == s3.symbol and s1.symbol is not None:
+					self.winner = s1.symbol
 
-		filled_squares = tuple(filter(lambda v: (v.value is not None), squares))
+		filled_squares = tuple(filter(lambda v: (v.symbol is not None), squares))
 		max_squares = self.config["board_dimensions"][0] * self.config["board_dimensions"][1]
 		
 		if self.winner == False and len(filled_squares) == max_squares:
-			# check if all squares are filled and if no one
-			# has won (draw)
 			self.winner = None
 
 		if self.winner is not False:
@@ -301,5 +301,4 @@ class Game:
 		self.timer.tick(self.FPS)
 
 game = Game(config)
-
 game.start_match()
