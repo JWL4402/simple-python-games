@@ -21,7 +21,22 @@ config = {
 
 
 class Square(pygame.sprite.Sprite):
+	"""
+    Represents a square on the board.
+
+    Methods:
+        update_value (void): changes the symbol the square
+        draw_letter (void): draws the symbol to the screen
+    """
+
 	def __init__(self, game, pos):
+		"""
+		Initalizes the square class.
+
+		Args:
+			game: instance of the Game class
+			pos: the position of the square on the board
+		"""
 		pygame.sprite.Sprite.__init__(self)
 
 		self.clicked = False
@@ -41,6 +56,15 @@ class Square(pygame.sprite.Sprite):
 		self.rect = rect
 
 	def update_value(self, symbol):
+		"""
+		Updates the symbol of the square.
+
+		Args:
+			symbol: content of the square (X or O)
+		
+		Returns:
+			int: 1 if value was changed, 0 if remains the same
+		"""
 		if self.clicked:
 			return 0
 
@@ -52,6 +76,7 @@ class Square(pygame.sprite.Sprite):
 		return 1
 
 	def draw_letter(self):
+		"""Draws the symbol to the screen."""
 		x = self.rect.x + ((100 - self.letter.get_rect().w) / 2)
 		y = self.rect.y + ((100 - self.letter.get_rect().h) / 2)
 		pos = (x, y)
@@ -60,9 +85,12 @@ class Square(pygame.sprite.Sprite):
 
 
 class Board:
-	"""Represents the board and contains the majority of functions necessary to play matches."""
+	"""
+    Represents the board.
+    """
 
 	def __init__(self, game):
+		"""Initializes the board class."""
 		self.game = game
 
 	def populate_board(self):
@@ -87,7 +115,12 @@ class Board:
 		self.squares = squares
 
 	def handle_click(self, click_pos):
-		"""Updates the value of clicked squares."""
+		"""
+		Handles changing the square's symbol when clicked.
+
+		Args:
+			click_pos: the position of the mouse when clicked
+		"""
 		config = self.game.config
 		clicked = [s for s in self.squares if s.rect.collidepoint(click_pos)]
 		# a list of all squares that collide with the
@@ -110,15 +143,27 @@ class Board:
 				square.draw_letter()
 
 	def update(self):
+		"""Executes necessary functions every loop."""
 		self.draw()
 		self.game.check_win()
 
 
 class Game:
-	"""Represents the game."""
+	"""
+    Represents the game.
+
+    Methods:
+        start_match (void): starts a game of Tic Tac Toe
+        update (void): executes the core gameplay loop
+    """
 
 	def __init__(self, config):
-		"""Initializes everything necessary for the game."""
+		"""
+        Initializes everything necessary for the game.
+        
+        Args:
+            config: a dictionary that represents the game settings
+        """
 		self.config = config
 		self.timer = pygame.time.Clock()
 		self.FPS = config["FPS"]
@@ -141,9 +186,8 @@ class Game:
 
 		self.board = Board(self)
 
-		self.start_match()
-
 	def start_match(self):
+		"""Starts a game of tictactoe."""
 		self.active = True
 		self.winner = False
 		self.turn = 0
@@ -155,6 +199,7 @@ class Game:
 			self.update()
 
 	def handle_events(self):
+		"""Handles events."""
 		events = pygame.event.get()
 
 		for event in events:
@@ -177,7 +222,7 @@ class Game:
 					pygame.quit()
 
 	def check_win(self):
-		"""Checks if a player has won or if the game has resulted in a draw."""
+		"""Checks for a winner or a draw."""
 		squares = self.board.squares
 
 		win_arrangements = [
@@ -213,6 +258,7 @@ class Game:
 			return False
 
 	def handle_win(self):
+		"""Prints a message to the screen depending on the winner."""
 		winner = self.winner
 		sx, sy = self.screen.get_size()
 
@@ -241,6 +287,7 @@ class Game:
 			self.timer.tick(self.FPS)
 			
 	def update(self):
+		"""Executes the main gameplay loop."""
 		self.screen.fill(self.config["border_color"])
 
 		self.handle_events()
@@ -255,4 +302,4 @@ class Game:
 
 game = Game(config)
 
-game.start()
+game.start_match()
