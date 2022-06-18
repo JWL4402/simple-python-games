@@ -1,4 +1,5 @@
 import pygame
+import numpy as np
 import random
 
 WHITE = (255, 255, 255)
@@ -14,8 +15,8 @@ class Game:
 
 		self.circles = pygame.sprite.Group()
 
-		self.max_circles = 6
-		self.cir_chance = 0.8 / self.FPS # 0.5 / second
+		self.max_circles = 9
+		self.cir_chance = 1.3 / self.FPS # num circle / second
 
 		pygame.display.set_caption("Circle Click")
 
@@ -34,14 +35,10 @@ class Game:
 		
 		if random.uniform(0.0, 1.0) < self.cir_chance:
 			self.circles.add(Circle(self))
-	
-	def draw(self):
-		self.WIN.fill(WHITE)
 
-		for circle in self.circles:
-			pygame.draw.circle(self.WIN, circle.color, circle.pos, circle.radius)
-
-		pygame.display.update()
+	def check_circle_escape(self):
+		escaped = list(filter(lambda c: c.rect.clamp(self.WIN.get_rect()) != c.rect, self.circles.sprites()))
+		print(escaped)
 
 	def handle_events(self):
 		events = pygame.event.get()
@@ -62,14 +59,25 @@ class Game:
 			self.start()
 	
 	def handle_mouse_input(self, click_pos):
-		clicked = list(filter(lambda s: s.rect.collidepoint(click_pos), self.circles.sprites()))
-		print(clicked)
+		clicked = list(filter(lambda c: cs.rect.collidepoint(click_pos), self.circles.sprites()))
+		# TODO : scoring system
 		self.circles.remove(clicked)
+
+	def draw(self):
+		self.WIN.fill(WHITE)
+
+		for circle in self.circles:
+			pygame.draw.circle(self.WIN, circle.color, circle.rect.center, circle.radius)
+
+		pygame.display.update()
 
 	def update(self):
 		self.handle_events()
 
 		self.create_circle()
+
+		self.circles.update()
+		self.check_circle_escape()
 
 		self.draw()
 
@@ -95,6 +103,12 @@ class Circle(pygame.sprite.Sprite):
 		size_min, size_max = (20, 50)
 		size = random.choice(range(size_min, size_max + 1))
 
+		self.velocity = round(random.choice(np.linspace(1.0, 2.5, 31).astype(float).tolist()))
+		self.velocity_max = round(random.choice(np.linspace(3.0, 5.5, 51).astype(float).tolist()))
+		self.acceleration = round(random.choice(np.linspace(0.01, 0.04, 4).astype(float).tolist()))
+		# numpy was the only way I could find to do get a range with a
+		# step that is a float. Not very readable.
+
 		self.image = pygame.Surface((size, size))
 		self.image.fill(self.color)
 
@@ -107,6 +121,12 @@ class Circle(pygame.sprite.Sprite):
 		self.pos = (x, y)
 
 		self.rect = self.image.get_rect(center = self.pos)
+	
+	def update(self):
+		if self.velocity < self.velocity_max:
+			self.velocity += self.acceleration
+
+		self.rect.move_ip((0, self.velocity))
 
 
 def main():
