@@ -13,6 +13,8 @@ class Game:
 		self.FPS = 30
 		self.timer = pygame.time.Clock()
 
+		self.font = pygame.font.SysFont("impact", 60)
+
 		self.circles = pygame.sprite.Group()
 
 		self.max_circles = 9
@@ -22,6 +24,7 @@ class Game:
 
 	def start(self):
 		self.active = True
+		self.lost = False
 
 		self.difficulty_factor = 0
 
@@ -37,7 +40,21 @@ class Game:
 		self.difficulty_factor += 0.001
 		df = self.difficulty_factor
 		self.max_circles = 9 + df
-		self.cir_chance = (1.3 / self.FPS) + (df / 10) # num circle / second
+		self.cir_chance = (1.3 / self.FPS) + (df / 10) # num circle / second		
+
+	def declare_loss(self):
+		self.lost = True
+		while self.active:
+			self.WIN.fill(WHITE)
+			sw, sh = self.WIN.get_size()
+			loss_msg = self.font.render("You've lost!", False, BLACK)
+			r = loss_msg.get_rect()
+			msg_pos = (sw // 2 - r.w // 2, sh // 2 - r.h // 2)
+			self.WIN.blit(loss_msg, msg_pos, r)
+			self.handle_events()
+
+			pygame.display.update()
+			self.timer.tick(self.FPS)
 
 	def create_circle(self):
 		if not len(self.circles.sprites()) < self.max_circles:
@@ -62,7 +79,7 @@ class Game:
 			if event.type == pygame.KEYDOWN:
 				self.handle_key_input()
 
-			if event.type == pygame.MOUSEBUTTONDOWN:
+			if event.type == pygame.MOUSEBUTTONDOWN and not self.lost:
 				self.handle_mouse_input(event.pos)
 
 	def handle_key_input(self):
@@ -72,7 +89,6 @@ class Game:
 	
 	def handle_mouse_input(self, click_pos):
 		clicked = list(filter(lambda c: c.rect.collidepoint(click_pos), self.circles.sprites()))
-		# TODO : scoring system
 		if len(clicked) == 0:
 			return
 		self.scoreboard.score += 100 + int((self.difficulty_factor // 1) * 25)
@@ -99,6 +115,9 @@ class Game:
 		self.draw()
 
 		self.scale_difficulty()
+
+		if self.scoreboard.lives <= 0:
+			self.declare_loss()
 
 		self.timer.tick(self.FPS)
 
@@ -127,7 +146,7 @@ class Scoreboard(pygame.sprite.Sprite):
 	def draw(self):
 		pygame.draw.rect(self.game.WIN, self.background_color, self.rect)
 
-		font = pygame.font.SysFont("impact", 60)
+		font = self.game.font
 		score = font.render(f"Score: {self.score}", False, self.text_color)
 		score_pos = (10, self.pos[1] + self.dim[1] // 2 - score.get_rect().h // 2)
 		lives = font.render(f"Lives: {self.lives}", False, self.text_color)
