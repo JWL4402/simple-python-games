@@ -53,10 +53,18 @@ class Game:
 			if event.type == pygame.KEYDOWN:
 				self.handle_key_input()
 
+			if event.type == pygame.MOUSEBUTTONDOWN:
+				self.handle_mouse_input(event.pos)
+
 	def handle_key_input(self):
 		keys = pygame.key.get_pressed()
 		if keys[pygame.K_r]:
 			self.start()
+	
+	def handle_mouse_input(self, click_pos):
+		clicked = list(filter(lambda s: s.rect.collidepoint(click_pos), self.circles.sprites()))
+		print(clicked)
+		self.circles.remove(clicked)
 
 	def update(self):
 		self.handle_events()
@@ -94,7 +102,7 @@ class Circle(pygame.sprite.Sprite):
 		r = size // 2
 		self.radius = r
 
-		x = random.choice(range(10 + r, WIN_width - 10 - r))
+		x = random.choice(range(10 + r, (WIN_width - 10 - r) + 1))
 		y = r + 10
 		self.pos = (x, y)
 
