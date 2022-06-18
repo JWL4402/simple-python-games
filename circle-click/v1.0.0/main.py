@@ -18,8 +18,18 @@ class Game:
 		self.active = True
 		self.circles = []
 
+		self.max_circles = 6
+		self.cir_chance = 0.8 / self.FPS # 0.5 / second
+
 		while self.active:
 			self.update()
+
+	def create_circle(self):
+		if not len(self.circles) < self.max_circles:
+			return
+		
+		if random.uniform(0.0, 1.0) < self.cir_chance:
+			self.circles.append(Circle(self))
 	
 	def draw(self):
 		self.WIN.fill(WHITE)
@@ -46,6 +56,8 @@ class Game:
 
 	def update(self):
 		self.handle_events()
+
+		self.create_circle()
 
 		self.draw()
 
