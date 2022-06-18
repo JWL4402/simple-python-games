@@ -23,6 +23,8 @@ class Game:
 	def start(self):
 		self.active = True
 
+		self.difficulty_factor = 0
+
 		if len(self.circles.sprites()) > 0:
 			self.circles.empty()
 
@@ -30,6 +32,12 @@ class Game:
 
 		while self.active:
 			self.update()
+	
+	def scale_difficulty(self):
+		self.difficulty_factor += 0.001
+		df = self.difficulty_factor
+		self.max_circles = 9 + df
+		self.cir_chance = (1.3 / self.FPS) + (df / 10) # num circle / second
 
 	def create_circle(self):
 		if not len(self.circles.sprites()) < self.max_circles:
@@ -67,7 +75,7 @@ class Game:
 		# TODO : scoring system
 		if len(clicked) == 0:
 			return
-		self.scoreboard.score += 100
+		self.scoreboard.score += 100 + int((self.difficulty_factor // 1) * 25)
 		self.circles.remove(clicked)
 
 	def draw(self):
@@ -89,6 +97,8 @@ class Game:
 		self.check_circle_escape()
 
 		self.draw()
+
+		self.scale_difficulty()
 
 		self.timer.tick(self.FPS)
 
@@ -142,12 +152,16 @@ class Circle(pygame.sprite.Sprite):
 
 	def create(self):
 		"""Creates a circle with a randomized position and size."""
-		size_min, size_max = (20, 50)
+		size_min, size_max = (30, 65)
 		size = random.choice(range(size_min, size_max + 1))
 
-		self.velocity = round(random.choice(np.linspace(1.0, 2.5, 31).astype(float).tolist()))
-		self.velocity_max = round(random.choice(np.linspace(3.0, 5.5, 51).astype(float).tolist()))
-		self.acceleration = round(random.choice(np.linspace(0.01, 0.04, 4).astype(float).tolist()))
+		df = self.game.difficulty_factor
+		self.velocity = round(random.choice(
+			np.linspace(1.0 + df, 2.5 + df, 31).astype(float).tolist()))
+		self.velocity_max = round(random.choice(
+			np.linspace(3.0 + df, 5.5 + df, 51).astype(float).tolist()))
+		self.acceleration = round(random.choice(
+			np.linspace(0.01 + df/1000, 0.04 + df/1000, 4).astype(float).tolist()))
 		# numpy was the only way I could find to do get a range with a
 		# step that is a float. Not very readable.
 
