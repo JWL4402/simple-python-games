@@ -7,7 +7,7 @@ BLACK = (0, 0, 0)
 
 class Game:
 	def __init__(self):
-		WIN_DIMENSIONS = (800, 600)
+		WIN_DIMENSIONS = (800, 700)
 		self.WIN = pygame.display.set_mode(WIN_DIMENSIONS)
 
 		self.FPS = 30
@@ -26,6 +26,8 @@ class Game:
 		if len(self.circles.sprites()) > 0:
 			self.circles.empty()
 
+		self.scoreboard = Scoreboard(self)
+
 		while self.active:
 			self.update()
 
@@ -37,8 +39,10 @@ class Game:
 			self.circles.add(Circle(self))
 
 	def check_circle_escape(self):
-		escaped = list(filter(lambda c: c.rect.clamp(self.WIN.get_rect()) != c.rect, self.circles.sprites()))
-		print(escaped)
+		escaped = pygame.sprite.spritecollide(self.scoreboard, self.circles, False)
+		if len(escaped) > 0:
+			self.scoreboard.lives -= 1
+			self.circles.remove(escaped)
 
 	def handle_events(self):
 		events = pygame.event.get()
@@ -59,8 +63,11 @@ class Game:
 			self.start()
 	
 	def handle_mouse_input(self, click_pos):
-		clicked = list(filter(lambda c: cs.rect.collidepoint(click_pos), self.circles.sprites()))
+		clicked = list(filter(lambda c: c.rect.collidepoint(click_pos), self.circles.sprites()))
 		# TODO : scoring system
+		if len(clicked) == 0:
+			return
+		self.scoreboard.score += 100
 		self.circles.remove(clicked)
 
 	def draw(self):
@@ -68,7 +75,9 @@ class Game:
 
 		for circle in self.circles:
 			pygame.draw.circle(self.WIN, circle.color, circle.rect.center, circle.radius)
-
+		
+		self.scoreboard.draw()
+		
 		pygame.display.update()
 
 	def update(self):
@@ -82,6 +91,39 @@ class Game:
 		self.draw()
 
 		self.timer.tick(self.FPS)
+
+class Scoreboard(pygame.sprite.Sprite):
+	def __init__(self, game):
+		pygame.sprite.Sprite.__init__(self)
+
+		self.game = game
+
+		self.background_color = BLACK
+		self.text_color = WHITE
+
+		self.score = 0
+		self.lives = 3
+
+		WIN_w, WIN_h = self.game.WIN.get_size()
+		self.dim = (WIN_w, 100)
+
+		self.image = pygame.Surface(self.dim)
+		self.image.fill(self.background_color)
+
+		self.pos = (0, WIN_h - 100)
+		self.rect = self.image.get_rect()
+		self.rect.x, self.rect.y = self.pos
+	
+	def draw(self):
+		pygame.draw.rect(self.game.WIN, self.background_color, self.rect)
+
+		font = pygame.font.SysFont("impact", 60)
+		score = font.render(f"Score: {self.score}", False, self.text_color)
+		score_pos = (10, self.pos[1] + self.dim[1] // 2 - score.get_rect().h // 2)
+		lives = font.render(f"Lives: {self.lives}", False, self.text_color)
+		lives_pos = (self.dim[0] // 2 + 10, self.pos[1] + self.dim[1] // 2 - lives.get_rect().h // 2)
+		self.game.WIN.blit(score, score_pos, score.get_rect())
+		self.game.WIN.blit(lives, lives_pos, lives.get_rect())
 
 class Circle(pygame.sprite.Sprite):
 	def __init__(self, game):
@@ -130,6 +172,7 @@ class Circle(pygame.sprite.Sprite):
 
 
 def main():
+	pygame.init()
 	game = Game()
 	game.start()
 
